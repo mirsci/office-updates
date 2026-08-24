@@ -258,6 +258,8 @@ Executives and product owners do not need to read the entire repository, but the
 
 ### UC_DEV_01 — Each dev can clone and build the repo in isolation
 
+**Machine**: ME_machine (CPU) — interactive dev shells
+
 #### What the repo provides
 
 | Mechanism | Evidence |
@@ -285,6 +287,8 @@ Executives and product owners do not need to read the entire repository, but the
 ---
 
 ### UC_DEV_02 — Each dev can code, build and test each module on different branches
+
+**Machine**: ME_machine (CPU) — interactive dev shells
 
 #### What the repo provides
 
@@ -320,6 +324,8 @@ VS Code is launched through `scripts/env/start_vscode.sh`, which sources the Flo
 ---
 
 ### UC_DEV_03 — Each dev can develop the multi-platform Swift mobile app on Linux, macOS and iOS
+
+**Machine**: ME_machine (CPU) — interactive dev shells
 
 #### What the repo provides
 
@@ -367,6 +373,8 @@ Integration tests are backend-URL-configurable via `scripts/env/run_swift_backen
 
 ### UC_DEV_04 — Each dev can run parallel/multi-user model inference and Gemma 4 LLM evals in developer mode
 
+**Machine**: ME_machine (CPU) → MI_machine (GPU) — evals orchestrate from ME_machine, inference served by MI_machine
+
 #### What the repo provides
 
 | Mechanism | Evidence |
@@ -406,6 +414,8 @@ The following use cases are supported by the current design and code, and comple
 
 ### UC_DEV_05 — A developer can reach a working state from a fresh clone in a single documented procedure
 
+**Machine**: ME_machine (CPU) — dev onboarding on interactive shells
+
 #### Key Value Points
 
 1. **Engineering management can add a new team member without losing a senior engineer for 1–2 days.** The 6-command scripted sequence is self-validating via `doctor.sh`; no tribal knowledge about LiteRT, Swiftly, or Flox internals is required to reach a working state.
@@ -431,6 +441,8 @@ The onboarding sequence is fully scripted:
 
 ### UC_DEV_06 — A developer can access shared model artifacts and eval datasets without per-dev download
 
+**Machine**: Both (MI_machine stores models, ME_machine accesses via S3/MinIO)
+
 #### Key Value Points
 
 1. **Eliminates redundant 10–20 GB model downloads across 7 workspaces.** A single MinIO instance on the shared machine serves all developers from one authoritative artifact, saving both internal bandwidth and disk allocation. Storage cost is one copy rather than seven.
@@ -451,6 +463,8 @@ The onboarding sequence is fully scripted:
 ---
 
 ### UC_DEV_07 — A developer can run the shopping assistant/app against a local or mocked backend
+
+**Machine**: ME_machine (CPU) — mock backend runs locally
 
 #### Key Value Points
 
@@ -473,6 +487,8 @@ The onboarding sequence is fully scripted:
 
 ### UC_DEV_08 — A developer can reproduce a baseline eval run and compare against team-shared references
 
+**Machine**: ME_machine (CPU) → MI_machine (GPU) — eval orchestration on ME, inference on MI
+
 #### Key Value Points
 
 1. **The team can prove to stakeholders that a specific change moved a metric.** Because model, runtime version, and dataset are all pinned, any score delta is attributable to an engineering change — not to environment noise. This is a prerequisite for credible model quality reporting and for making go/no-go decisions on prompt changes.
@@ -494,6 +510,8 @@ The onboarding sequence is fully scripted:
 
 ### UC_DEV_09 — A developer can run inference against multiple fine-tuned model versions and compare their behavior
 
+**Machine**: ME_machine (CPU) → MI_machine (GPU) — multiple model versions on MI, eval comparison on ME
+
 #### Key Value Points
 
 1. **The team can measure fine-tuning progress objectively.** Because the backend URL and model path are both runtime-configurable env vars, two server instances can be started side-by-side — one serving the base Gemma 4 E4B checkpoint and one serving a fine-tuned checkpoint — and the same eval suite run against both. Score deltas are attributable to the fine-tuning change alone, not to any environmental difference.
@@ -513,6 +531,8 @@ The onboarding sequence is fully scripted:
 ---
 
 ### UC_DEV_10 — iOS and macOS developers can use the shared Linux inference server as their backend
+
+**Machine**: ME_machine (dev) → MI_machine (GPU) — Swift devs on ME target inference on MI
 
 #### Key Value Points
 
@@ -535,6 +555,8 @@ The onboarding sequence is fully scripted:
 
 ### UC_DEV_11 — A developer can run data synthesis workflows independently of the inference server
 
+**Machine**: ME_machine (CPU) — data synthesis runs entirely on CPU
+
 #### Key Value Points
 
 1. **Data engineers are productive even when the inference server is down or GPU time is reserved.** `llmeval_framework` has its own Flox environment, test suite, and CI path — it is a first-class deliverable, not a side effect of the inference pipeline. Data workstreams never stall waiting for GPU availability.
@@ -553,6 +575,8 @@ The onboarding sequence is fully scripted:
 
 ### UC_DEV_12 — A developer can clean and reset their local environment without affecting teammates
 
+**Machine**: ME_machine (CPU) — per-user cleanup on dev shells
+
 #### Key Value Points
 
 1. **A developer who corrupts their local cache or virtual environment recovers in under a minute.** Two commands (`project_cache_cleanup.sh`, `reset_upper_layer.sh`) restore a clean state without requiring a senior engineer's time or a full repo re-clone. Lost productivity from environment recovery is near zero.
@@ -570,6 +594,8 @@ The onboarding sequence is fully scripted:
 ---
 
 ### UC_DEV_13 — The team can validate GPU readiness before scheduling expensive inference or eval runs
+
+**Machine**: MI_machine (GPU) — GPU preflight runs directly on GPU node
 
 #### Key Value Points
 
@@ -590,6 +616,8 @@ The onboarding sequence is fully scripted:
 
 ### UC_DEV_14 — The team can iterate on prompt and metric design without touching inference or app code
 
+**Machine**: ME_machine (CPU) → MI_machine (GPU) — prompt/metric changes on ME, tested against MI
+
 #### Key Value Points
 
 1. **Prompt engineers and AI researchers iterate without a software release cycle.** Changes to system prompts and eval criteria are made in Python fixture files or test parameters — not in compiled application code — and results are visible on the next eval run. The feedback loop is minutes, not a sprint.
@@ -609,6 +637,8 @@ The onboarding sequence is fully scripted:
 ---
 
 ### UC_DEV_15 — CI/CD pipelines can validate any module using the same scripts developers use
+
+**Machine**: ME_machine (CPU) — CI runs on same scripts as dev shells
 
 #### Key Value Points
 
@@ -632,6 +662,8 @@ The onboarding sequence is fully scripted:
 
 ### UC_DEV_16 — The team can enforce hybrid eval policy gates plus rubric scoring for every release candidate
 
+**Machine**: ME_machine (CPU) → MI_machine (GPU) — policy gates run on ME, inference on MI
+
 #### Key Value Points
 
 1. **High-risk policy failures are blocked early.** Hard gate nodes catch must-not-violate behavior (for example deterministic size conversion claims) before a model candidate reaches product review.
@@ -649,6 +681,8 @@ The onboarding sequence is fully scripted:
 ---
 
 ### UC_DEV_17 — The team can run conditional-path evals that reflect real conversation branches
+
+**Machine**: ME_machine (CPU) → MI_machine (GPU) — branch orchestration on ME, inference on MI
 
 #### Key Value Points
 
@@ -668,6 +702,8 @@ The onboarding sequence is fully scripted:
 
 ### UC_DEV_18 — The team can measure and control judge-model variability in eval outcomes
 
+**Machine**: ME_machine (CPU) → MI_machine (GPU) — rerun analysis on ME, inference on MI
+
 #### Key Value Points
 
 1. **Score movement is trusted.** Re-run protocols separate true model improvement from judge stochasticity.
@@ -685,6 +721,8 @@ The onboarding sequence is fully scripted:
 ---
 
 ### UC_DEV_19 — The team can maintain a versioned synthetic dataset lifecycle for evolving business scenarios
+
+**Machine**: ME_machine (CPU) — data synthesis independent of GPU
 
 #### Key Value Points
 
@@ -704,6 +742,8 @@ The onboarding sequence is fully scripted:
 
 ### UC_DEV_20 — The team can produce standardized model promotion recommendation packs
 
+**Machine**: ME_machine (CPU) — recommendation packs compiled on ME
+
 #### Key Value Points
 
 1. **Promotion reviews are faster.** Stakeholders receive the same structured evidence packet each cycle (gates, rubric, deltas, confidence, risk notes).
@@ -721,6 +761,8 @@ The onboarding sequence is fully scripted:
 ---
 
 ### UC_DEV_21 — The team can continuously recalibrate eval policy and criteria as business rules evolve
+
+**Machine**: ME_machine (CPU) → MI_machine (GPU) — policy changes on ME, validated against MI
 
 #### Key Value Points
 
@@ -742,29 +784,44 @@ The onboarding sequence is fully scripted:
 
 This is the canonical detailed matrix. It preserves per-use-case status while adding the capability area needed for executive and product-owner scanning.
 
-| Capability area | UC | Status | Isolation / control point | Hardware or shared dependency |
+### Machine Reference Legend
+
+| Identifier | Name | Role |
+|------------|------|------|
+| **MI_machine** | Model Inference GPU Machine | Production inference serving (H100 GPU, K8s pods) |
+| **ME_machine** | Model Evals CPU Machine | Development + Eval execution (CPU, interactive shells, 7 devs) |
+
+### Use Case Matrix
+
+| Capability area | UC | Status | Machine(s) | Isolation / control point |
 |---|---|---|---|---|
-| Team environment | UC_DEV_01 Clone and build in isolation | **Validated** | Per-user clone or worktree | Shared Linux machine + Nix daemon |
-| Module delivery | UC_DEV_02 Code, build and test per module on branches | **Validated** | Per-checkout `build/` + Flox cache | Shared Linux machine |
-| Multi-platform app | UC_DEV_03 Develop cross-platform Swift app | **Validated (Linux); Design validated (macOS/iOS)** | Platform adapters + backend URL | Apple hardware for macOS/iOS targets |
-| Inference and eval isolation | UC_DEV_04 Parallel inference and LLM evals | **Validated (CPU); Scheduling required (GPU)** | Port-scoped servers + per-URL evals | GPU scheduling convention or MIG |
-| Onboarding | UC_DEV_05 Onboard from fresh clone | **Supported** | Per-dev scripts | Shared Nix daemon |
-| Artifact governance | UC_DEV_06 Shared model artifacts and datasets | **Supported (MinIO ready)** | Read-only shared mount or MinIO | MinIO instance on shared machine |
-| App development | UC_DEV_07 Shopping controller against mock backend | **Supported** | URL-parameterized backend | None (CPU only) |
-| Eval reproducibility | UC_DEV_08 Reproduce baseline eval runs | **Supported (DVC/pinning in place)** | Pinned artifacts + per-run ports | Inference server (CPU or GPU) |
-| Model comparison | UC_DEV_09 Run inference against multiple fine-tuned model versions | **Supported** | Per-port server instances + pinned model metadata | Inference server (CPU or GPU) |
-| Apple delivery | UC_DEV_10 iOS/macOS devs use shared Linux backend | **Supported** | URL parameter | Shared Linux server running |
-| Data synthesis | UC_DEV_11 Data synthesis independent of inference | **Supported** | Separate module + Flox env | External judge LLM |
-| Environment recovery | UC_DEV_12 Clean/reset without affecting teammates | **Supported** | Cleanup scoped to checkout | None |
-| GPU readiness | UC_DEV_13 Validate GPU readiness before expensive runs | **Supported** | Snapshot dir per port | GPU machine |
-| Eval iteration | UC_DEV_14 Iterate on prompts and metrics independently | **Supported** | Separate eval module | Inference server |
-| CI/CD parity | UC_DEV_15 CI/CD uses same scripts as developers | **Supported** | Declarative Flox + shell scripts | CI runner with Nix daemon |
-| Policy gates | UC_DEV_16 Enforce hybrid policy-gate plus rubric evals | **Supported** | Metric-level gate and rubric separation | Inference server + eval judge |
-| Conditional evals | UC_DEV_17 Run conditional-path conversation evals | **Supported** | Branch-specific test orchestration | Inference server + eval harness |
-| Judge reliability | UC_DEV_18 Control judge-model variability in eval runs | **Supported** | Re-run protocol + confidence thresholds | Inference server + eval judge |
-| Dataset lifecycle | UC_DEV_19 Maintain versioned synthetic dataset lifecycle | **Supported** | DVC-versioned datasets + shared storage | MinIO/S3 + eval framework |
-| Promotion governance | UC_DEV_20 Produce standardized promotion recommendation packs | **Supported** | Shared evidence templates and scorecards | Cross-track process dependency |
-| Eval-policy maintenance | UC_DEV_21 Recalibrate eval policy as business rules evolve | **Supported** | Criteria/prompt co-validation workflow | Inference server + eval suite |
+| Team environment | UC_DEV_01 Clone and build in isolation | **Validated** | ME_machine | Per-user clone or worktree |
+| Module delivery | UC_DEV_02 Code, build and test per module on branches | **Validated** | ME_machine | Per-checkout `build/` + Flox cache |
+| Multi-platform app | UC_DEV_03 Develop cross-platform Swift app | **Validated (Linux); Design validated (macOS/iOS)** | ME_machine | Platform adapters + backend URL |
+| Inference and eval isolation | UC_DEV_04 Parallel inference and LLM evals | **Validated (CPU); Scheduling required (GPU)** | ME_machine → MI_machine | Port-scoped servers + per-URL evals |
+| Onboarding | UC_DEV_05 Onboard from fresh clone | **Supported** | ME_machine | Per-dev scripts |
+| Artifact governance | UC_DEV_06 Shared model artifacts and datasets | **Supported (MinIO ready)** | Both | Read-only shared mount or MinIO |
+| App development | UC_DEV_07 Shopping controller against mock backend | **Supported** | ME_machine | URL-parameterized backend |
+| Eval reproducibility | UC_DEV_08 Reproduce baseline eval runs | **Supported (DVC/pinning in place)** | ME_machine → MI_machine | Pinned artifacts + per-run ports |
+| Model comparison | UC_DEV_09 Run inference against multiple fine-tuned model versions | **Supported** | ME_machine → MI_machine | Per-port server instances + pinned model metadata |
+| Apple delivery | UC_DEV_10 iOS/macOS devs use shared Linux backend | **Supported** | ME_machine → MI_machine | URL parameter |
+| Data synthesis | UC_DEV_11 Data synthesis independent of inference | **Supported** | ME_machine | Separate module + Flox env |
+| Environment recovery | UC_DEV_12 Clean/reset without affecting teammates | **Supported** | ME_machine | Cleanup scoped to checkout |
+| GPU readiness | UC_DEV_13 Validate GPU readiness before expensive runs | **Supported** | MI_machine | Snapshot dir per port |
+| Eval iteration | UC_DEV_14 Iterate on prompts and metrics independently | **Supported** | ME_machine → MI_machine | Separate eval module |
+| CI/CD parity | UC_DEV_15 CI/CD uses same scripts as developers | **Supported** | ME_machine | Declarative Flox + shell scripts |
+| Policy gates | UC_DEV_16 Enforce hybrid policy-gate plus rubric evals | **Supported** | ME_machine → MI_machine | Metric-level gate and rubric separation |
+| Conditional evals | UC_DEV_17 Run conditional-path conversation evals | **Supported** | ME_machine → MI_machine | Branch-specific test orchestration |
+| Judge reliability | UC_DEV_18 Control judge-model variability in eval runs | **Supported** | ME_machine → MI_machine | Re-run protocol + confidence thresholds |
+| Dataset lifecycle | UC_DEV_19 Maintain versioned synthetic dataset lifecycle | **Supported** | ME_machine | DVC-versioned datasets + shared storage |
+| Promotion governance | UC_DEV_20 Produce standardized promotion recommendation packs | **Supported** | ME_machine | Shared evidence templates and scorecards |
+| Eval-policy maintenance | UC_DEV_21 Recalibrate eval policy as business rules evolve | **Supported** | ME_machine → MI_machine | Criteria/prompt co-validation workflow |
+
+### Machine Assignment Notes
+
+- **ME_machine only**: Development, build, test, data synthesis, CI/CD — no GPU required
+- **MI_machine only**: GPU preflight validation (UC_DEV_13) — runs directly on GPU node
+- **ME_machine → MI_machine**: Eval/inference workflows where ME_machine orchestrates and MI_machine serves inference via HTTP
 
 ## Knowledge Transfer Roadmap
 
