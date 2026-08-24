@@ -7,6 +7,78 @@
 
 This runbook captures the interactive analysis for porting `src/inference_srv_py` to a Kubernetes-based multi-tenant development environment with fractional GPU access. The target runtime uses a **fine-tuned Gemma 4 E4B** model and must support the validated use cases in [[17-multi-tenant-devenv-use-cases]].
 
+---
+
+## Machine Topology
+
+The target K8s environment consists of **two distinct machines** with complementary roles:
+
+| Identifier | Name | Role | Hardware | K8s Role |
+|------------|------|------|----------|----------|
+| **MI_machine** | Model Inference GPU Machine | Production inference serving | NVIDIA H100 GPU (MIG 1/7 slice) | Inference pods (`inference_srv_py`, LiteRT-LM/vLLM) |
+| **ME_machine** | Model Evals CPU Machine | Development + Eval execution | 8-core CPU, 32GB RAM | Eval pods (DeepEval), interactive dev shells (7 devs) |
+
+### Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    ME_machine (CPU)                         │
+│  Multi-tenant development + eval orchestration              │
+│                                                             │
+│  ┌───────────┐ ┌───────────┐ ┌───────────┐                 │
+│  │ Dev Shell │ │ Dev Shell │ │ Dev Shell │  ... (7 devs)   │
+│  │ (user1)   │ │ (user2)   │ │ (user3)   │                 │
+│  └───────────┘ └───────────┘ └───────────┘                 │
+│                                                             │
+│  ┌─────────────────────────────────────────┐               │
+│  │           Eval Pod (optional K8s)       │               │
+│  │  - llmeval_suite                        │      HTTP     │
+│  │  - llmeval_framework                    │──────────────┐│
+│  │  - DeepEval + pytest                    │              ││
+│  └─────────────────────────────────────────┘              ││
+│                                                            ││
+└────────────────────────────────────────────────────────────┘│
+                                                              │
+                         /v1/chat/completions                 │
+                                                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    MI_machine (GPU)                         │
+│  Model inference serving                                    │
+│                                                             │
+│  ┌─────────────────────────────────────────┐               │
+│  │           Inference Pod (GPU)           │               │
+│  │  - inference_srv_py                     │               │
+│  │  - LiteRT-LM or vLLM engine             │               │
+│  │  - Gemma 4 E4B model                    │               │
+│  │  - H100 MIG 1/7 slice (10GB VRAM)       │               │
+│  └─────────────────────────────────────────┘               │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Machine Responsibilities
+
+| Concern | MI_machine | ME_machine |
+|---------|------------|------------|
+| GPU workloads | ✅ All inference | ❌ None |
+| Model loading | ✅ LiteRT-LM/vLLM | ❌ N/A |
+| Eval orchestration | ❌ N/A | ✅ DeepEval, pytest |
+| Interactive shells | ❌ Not for devs | ✅ 7 Linux accounts |
+| K8s availability | ✅ Always (inference pods) | ⚠️ On-demand (eval jobs) |
+| Network role | Serves `/v1/chat/completions` | Calls MI_machine via HTTP |
+
+### Cost Allocation
+
+| Machine | Component | Monthly Cost |
+|---------|-----------|--------------|
+| MI_machine | H100 MIG 1/7 slice | $400 |
+| MI_machine | CPU/orchestration overhead | $50 |
+| ME_machine | 8-core CPU, 32GB RAM | $150 |
+| Shared | S3/MinIO storage | $10 |
+| **Total** | | **$610** |
+
+---
+
 ## Target Environment Characteristics
 
 | Capability | Provided | Constraints |
@@ -100,20 +172,22 @@ These requirements are captured here during analysis. Once validated, they would
 
 ### Business Requirement Summary
 
-| ID | Title | Key Concern |
-|---|---|---|
-| BR-K8S-01 | Multi-Tenant Inference Isolation | Request/session isolation with fractional GPU |
-| BR-K8S-02 | Multi-Version Fine-Tuned Model Governance | Version control, registry, side-by-side comparison |
-| BR-K8S-03 | GPU Resource Boundary Portability | Preserve narrow Vulkan bridge in container |
-| BR-K8S-04 | Development Integration Environment Parity | Support UC_DEV_04, UC_DEV_08 workflows |
-| BR-K8S-05 | Backend Contract Stability | Preserve `/v1/chat/completions` for clients/eval |
-| BR-K8S-06 | Multi-Engine Inference Support | LiteRT-LM + vLLM behind unified contract |
-| BR-K8S-07 | Environment Reproducibility Preservation | Maintain Flox/Nix guarantees in K8s |
-| BR-K8S-08 | Eval Suite CPU Separation | Run eval on CPU pods, inference on GPU — cost optimization |
+| ID | Title | Machine | Key Concern |
+|---|---|---|---|
+| BR-K8S-01 | Multi-Tenant Inference Isolation | MI_machine | Request/session isolation with fractional GPU |
+| BR-K8S-02 | Multi-Version Fine-Tuned Model Governance | MI_machine | Version control, registry, side-by-side comparison |
+| BR-K8S-03 | GPU Resource Boundary Portability | MI_machine | Preserve narrow Vulkan bridge in container |
+| BR-K8S-04 | Development Integration Environment Parity | ME_machine → MI_machine | Support UC_DEV_04, UC_DEV_08 workflows |
+| BR-K8S-05 | Backend Contract Stability | MI_machine | Preserve `/v1/chat/completions` for clients/eval |
+| BR-K8S-06 | Multi-Engine Inference Support | MI_machine | LiteRT-LM + vLLM behind unified contract |
+| BR-K8S-07 | Environment Reproducibility Preservation | Both | Maintain Flox/Nix guarantees in K8s |
+| BR-K8S-08 | Eval Suite CPU Separation | ME_machine → MI_machine | Run eval on CPU pods, inference on GPU — cost optimization |
 
 ---
 
 ### BR-K8S-01: Multi-Tenant Inference Isolation
+
+**Machine**: MI_machine (GPU)
 
 **Intent**: Each development team member must be able to run inference workloads without interfering with other team members' sessions.
 
@@ -134,6 +208,8 @@ These requirements are captured here during analysis. Once validated, they would
 ---
 
 ### BR-K8S-02: Multi-Version Fine-Tuned Model Governance
+
+**Machine**: MI_machine (GPU)
 
 **Intent**: Multiple fine-tuned versions of Gemma 4 E4B must be deployable, version-controlled, and comparable side-by-side.
 
@@ -174,6 +250,8 @@ These requirements are captured here during analysis. Once validated, they would
 
 ### BR-K8S-03: GPU Resource Boundary Portability
 
+**Machine**: MI_machine (GPU)
+
 **Intent**: The current narrow GPU bridge model (Vulkan ICD discovery, no LD_LIBRARY_PATH mutation) must be preserved or adapted to the K8s GPU operator model.
 
 **Constraints**:
@@ -194,6 +272,8 @@ These requirements are captured here during analysis. Once validated, they would
 ---
 
 ### BR-K8S-04: Development Integration Environment Parity
+
+**Machine**: ME_machine (CPU) → MI_machine (GPU)
 
 **Intent**: The K8s deployment must support the same developer workflows validated in [[17-multi-tenant-devenv-use-cases]], particularly UC_DEV_04 (parallel inference) and UC_DEV_08 (eval execution).
 
@@ -216,6 +296,8 @@ These requirements are captured here during analysis. Once validated, they would
 
 ### BR-K8S-05: Backend Contract Stability
 
+**Machine**: MI_machine (GPU)
+
 **Intent**: The existing backend contract (HTTP endpoints, error semantics, streaming behavior) must be preserved to maintain compatibility with Swift app clients and eval harnesses.
 
 **References**: [[07-dd-backend-conversation-contract]], [[08-dd-streaming-chat-semantics]], [[10-dd-backend-error-semantics]]
@@ -236,6 +318,8 @@ These requirements are captured here during analysis. Once validated, they would
 ---
 
 ### BR-K8S-06: Multi-Engine Inference Support
+
+**Machine**: MI_machine (GPU)
 
 **Intent**: The deployment must support both LiteRT-LM and vLLM inference engines concurrently, with engine selection per-request or per-deployment.
 
@@ -265,6 +349,8 @@ These requirements are captured here during analysis. Once validated, they would
 ---
 
 ### BR-K8S-07: Environment Reproducibility Preservation
+
+**Machine**: Both (MI_machine + ME_machine)
 
 **Intent**: The K8s deployment must preserve the reproducibility guarantees currently provided by Flox/Nix environments.
 
@@ -299,6 +385,8 @@ These requirements are captured here during analysis. Once validated, they would
 
 ### BR-K8S-08: Eval Suite CPU Separation
 
+**Machine**: ME_machine (CPU) → MI_machine (GPU)
+
 **Intent**: The LLM eval suite (`llmeval_suite`, `llmeval_framework`) must run on CPU-only pods while inference runs on GPU pods, optimizing GPU cost.
 
 **Rationale**:
@@ -315,15 +403,29 @@ These requirements are captured here during analysis. Once validated, they would
 └─────────────────┘                 └─────────────────┘
 ```
 
-**K8s target architecture**:
+**K8s target architecture** (two-machine model):
 ```
-┌─────────────────────┐
-│  Eval Pod (CPU)     │
-│  - llmeval_suite    │      HTTP       ┌─────────────────────┐
-│  - llmeval_framework│ ──────────────► │ Inference Pod (GPU) │
-│  - DeepEval         │  /v1/chat/...   │ - inference_srv_py  │
-│  - pytest           │                 │ - LiteRT-LM/vLLM    │
-└─────────────────────┘                 └─────────────────────┘
+┌─────────────────────────────────┐
+│  ME_machine (CPU)               │
+│  ┌─────────────────────┐        │
+│  │  Eval Pod (CPU)     │        │
+│  │  - llmeval_suite    │        │      HTTP
+│  │  - llmeval_framework│────────┼──────────────────┐
+│  │  - DeepEval         │        │                  │
+│  │  - pytest           │        │                  │
+│  └─────────────────────┘        │                  │
+└─────────────────────────────────┘                  │
+                                                     │
+                                    /v1/chat/...     ▼
+                                    ┌─────────────────────────────────┐
+                                    │  MI_machine (GPU)               │
+                                    │  ┌─────────────────────┐        │
+                                    │  │ Inference Pod (GPU) │        │
+                                    │  │ - inference_srv_py  │        │
+                                    │  │ - LiteRT-LM/vLLM    │        │
+                                    │  │ - H100 MIG slice    │        │
+                                    │  └─────────────────────┘        │
+                                    └─────────────────────────────────┘
 ```
 
 **Constraints**:
