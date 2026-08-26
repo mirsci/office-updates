@@ -6,6 +6,18 @@ Deep down into design to figure some key things
 
 Cost model emerges from design; cannot be defined separate or a-priori
 
+<img width="778" height="646" alt="image" src="https://github.com/user-attachments/assets/7d7449dc-3f4a-48a8-b957-fef97fd635d2" />
+<img width="762" height="707" alt="image" src="https://github.com/user-attachments/assets/67a22c68-4072-43fa-bfd7-2171b83ca1f4" />
+<img width="750" height="555" alt="image" src="https://github.com/user-attachments/assets/bc894ffb-c6bd-4055-af3f-7ba2289094ec" />
+<img width="782" height="622" alt="image" src="https://github.com/user-attachments/assets/188129eb-d601-4f65-9a85-da81d16e171b" />
+<img width="763" height="687" alt="image" src="https://github.com/user-attachments/assets/a56633d3-793f-452c-9970-9be3d155088a" />
+<img width="768" height="715" alt="image" src="https://github.com/user-attachments/assets/f17c4b68-195a-4ede-8280-b379ccd4babe" />
+<img width="597" height="662" alt="image" src="https://github.com/user-attachments/assets/28a9c7e7-7074-407a-a4c2-faaf241f25b9" />
+
+
+
+
+
 ### MIG vs Time-Slicing Trade-offs
 
 RunAI supports two fractional GPU modes with different characteristics:
