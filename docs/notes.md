@@ -17,7 +17,20 @@ Findings
   <img width="747" height="513" alt="image" src="https://github.com/user-attachments/assets/f07fb513-9e35-4e11-8256-471b7675768c" />
 
 - Design images in progress with RunAI
-         - TBA 
+         - TBA
+- Device vs server side inference - resources impact
+<img width="755" height="426" alt="image" src="https://github.com/user-attachments/assets/ccc22038-b7bc-499e-95b5-549241037613" />
+<img width="748" height="737" alt="image" src="https://github.com/user-attachments/assets/a4f1e891-6026-4363-b5b5-c9badcdcc3ae" />
+
+Definition of Done
+1 theoretical cost analysis (with assumptions, scenarios)
+2 formulas from design at the app level by components (CPU, GPU)
+3 add telemetry and measure cost per token at GPU, CPU level
+4 size infrastructure, to scale at enterprise levels
+
+Decision points
+- Test fine-tuned model on server
+- Test harness and fine-tuned model on device
 	
 Next steps
 - Oumi to provide fine-tune model server-side (not quantized)
