@@ -8,10 +8,13 @@ Findings
 - Design is needed to measure accurately (used AI based on design knowledge)
 - Telemetry is needed to accurately measure costs
 - CPU time matters, not just GPU time for costing
-         - Price of token is not GPU only, it is the CPU - tool calls, internet
+	- Price of token is not GPU only, it is the CPU - tool calls, internet
   
 <img width="711" height="747" alt="image" src="https://github.com/user-attachments/assets/533cf10b-8140-49f9-a7ac-db330d28359c" />
 <img width="792" height="580" alt="image" src="https://github.com/user-attachments/assets/7a7eca72-5c36-49d3-aae8-ff42a9c1842c" />
+
+- Metrics for sizing
+  <img width="747" height="513" alt="image" src="https://github.com/user-attachments/assets/f07fb513-9e35-4e11-8256-471b7675768c" />
 
 - Design images in progress with RunAI
          - TBA 
@@ -21,7 +24,7 @@ Next steps
 - Who will work on orchestration with LangGraph next week and integration
 - Working on designing AI farm images for deployment. Connect with Dharitri, Yash on Tuesday
 - Dharitri to provide AWS contact to compare costs
-- Add telemetry: discern CPU time over GPU time
+- Add telemetry to differentiate between CPU time and GPU time
 
 --------------------------
 Validating design -> costing is a byproduct
