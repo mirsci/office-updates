@@ -1,3 +1,29 @@
+Value
+- Deploying model (Gemma 4) on internal infrastructure is saving costs
+- Discern value / performance/ costs of the model from overall processing time
+- Discern between client side and server side benchmarking
+
+Findings
+- Theoretical calculations are insufficient
+- Design is needed to measure accurately (used AI based on design knowledge)
+- Telemetry is needed to accurately measure costs
+- CPU time matters, not just GPU time for costing
+         - Price of token is not GPU only, it is the CPU - tool calls, internet
+  
+<img width="711" height="747" alt="image" src="https://github.com/user-attachments/assets/533cf10b-8140-49f9-a7ac-db330d28359c" />
+<img width="792" height="580" alt="image" src="https://github.com/user-attachments/assets/7a7eca72-5c36-49d3-aae8-ff42a9c1842c" />
+
+- Design images in progress with RunAI
+         - TBA 
+	
+Next steps
+- Oumi to provide fine-tune model server-side (not quantized)
+- Who will work on orchestration with LangGraph next week and integration
+- Working on designing AI farm images for deployment. Connect with Dharitri, Yash on Tuesday
+- Dharitri to provide AWS contact to compare costs
+- Add telemetry: discern CPU time over GPU time
+
+--------------------------
 Validating design -> costing is a byproduct
 Design to become more mature
 
