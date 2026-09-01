@@ -16,6 +16,10 @@ Findings
 - Metrics for sizing
   <img width="747" height="513" alt="image" src="https://github.com/user-attachments/assets/f07fb513-9e35-4e11-8256-471b7675768c" />
 
+Metrics for multi-turn conversations, multi-turn GPU
+<img width="872" height="717" alt="image" src="https://github.com/user-attachments/assets/5538f0af-ad09-4d3c-b2e5-03a5309a42fd" />
+
+
 - Design images in progress with RunAI
          - TBA
 - Device vs server side inference - resources impact
