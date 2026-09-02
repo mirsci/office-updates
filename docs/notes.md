@@ -1,3 +1,10 @@
+MVP 1: execute deployment workflow with NIM and Gemma 4 E4B, from HuggingFace for Dev environment
+Get access to Kubernetes / OCP cluster -> command line access  to console (kubectl)
+Get command line access and login to Docker containers to identify resources and identify them under load
+Full access to monitoring components for the running containers, telemetry for models and resources which are allocated: Graphana . Prometheus, LangFuse. Change the telemetry settings, customize and control metrics. If no documentation on this.
+Get access to query persistence stores (S3, PVC)
+Deployment architecture of the environment: Kubernetes setup, memory available on the machines, where are the persistence stores (S3, PVC)
+
 Value
 - Deploying model (Gemma 4) on internal infrastructure is saving costs
 - Discern value / performance/ costs of the model from overall processing time
