@@ -1,3 +1,36 @@
+1. how to load a custom fine-tuned model (from local repo), not from HuggingFace?
+Upload to S3 bucket, download from S3 for inference
+For NVIDIA project the model is in registry, it is pulled automatically
+Custom model is registered with EMRM, in the registry
+<img width="695" height="441" alt="image" src="https://github.com/user-attachments/assets/66f6b9aa-3096-42a3-8bc4-a83dda747a26" />
+<img width="829" height="354" alt="image" src="https://github.com/user-attachments/assets/489bd0e2-6d39-43f2-9c10-782a66043581" />
+<img width="1172" height="681" alt="image" src="https://github.com/user-attachments/assets/07c87a67-852f-4974-97cc-a6e0d4d955e5" />
+<img width="1263" height="594" alt="image" src="https://github.com/user-attachments/assets/1aee4981-6243-4059-9839-d5cac5fe96f1" />
+
+AI Farm has its own S3 in AI farm, being mainly used for Airflow jobs for training, integrating with Jupyter
+<img width="1032" height="568" alt="image" src="https://github.com/user-attachments/assets/4266ba86-00cc-4f5f-aba7-a80a1961b64b" />
+
+2. in a fractional GPU setup, is the LLM loaded in every fraction?
+	It is separate
+	If using Triton runtime, then batching is more efficient
+
+3.  please share the scripts to run this deployment? Are they in Claude.md?
+	deployment only thru Github actions…
+	Can’t deploy directly from app code to farm
+	One option is for iy50 app can create registry in artefactory, store model in artefactory for Docker
+	If model is not in registry, then they can be stored in S3  
+4. 	how does Pharos - Prometheus monitoring works with LangFuse?
+    Open for everyone, no enterprise grade
+5. do you know how Al farm charges GPU utilization?
+	No chargeback until 2028, unclear if for orod
+6. detailed configuration for telemetry (need to calculate token costs, given fractional GPU pricing)
+   		AI agent gateway being built - OCP separate with agents, models in AI farm
+		Onboard thru that gateway 
+	<img width="1278" height="619" alt="image" src="https://github.com/user-attachments/assets/200194cf-c423-406e-aef5-dae07e7c2800" />
+
+
+
+
 MVP 1: execute deployment workflow with NIM and Gemma 4 E4B, from HuggingFace for Dev environment
 Get access to Kubernetes / OCP cluster -> command line access  to console (kubectl)
 Get command line access and login to Docker containers to identify resources and identify them under load
