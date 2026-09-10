@@ -5,10 +5,13 @@ curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/opensh
 tar xvf openshift-client-linux.tar.gz
 
 mkdir -p ~/bin
-mv oc kubectl ~/bin/   # kubectl is optional but useful
+
+mv oc kubectl ~/bin/   
+
+# kubectl is optional but useful
 chmod +x ~/bin/oc ~/bin/kubectl
 
-
+-------------------------
 **Deploying a Gemma 4 Small Language Model (SLM) with vLLM on OpenShift, automated via GitHub Actions**
 
 Gemma 4 (released 2026) is Google’s efficient open-weight multimodal family. “SLM” typically refers to the smaller variants such as **Gemma 4 E2B / E4B** or the **12B** model. These are well-suited for single-GPU or modest multi-GPU serving. Official model IDs on Hugging Face include `google/gemma-4-E4B-it`, `google/gemma-4-12B-it`, etc. vLLM has day-0 / early support for Gemma 4.
