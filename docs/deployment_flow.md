@@ -1,3 +1,8 @@
+<img width="725" height="740" alt="image" src="https://github.com/user-attachments/assets/a1764c9c-b2dc-400f-a251-c1965f6478e9" />
+
+-----------------------------
+
+### Instructions for Linux server to install OpenShift
 https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/
 
 curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz
@@ -8,7 +13,7 @@ mkdir -p ~/bin
 
 mv oc kubectl ~/bin/   
 
-# kubectl is optional but useful
+// kubectl is optional but useful
 chmod +x ~/bin/oc ~/bin/kubectl
 
 -------------------------
