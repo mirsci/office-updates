@@ -1,6 +1,110 @@
+## Purpose
+Define a curricculum for the code walkthrough for the overall joint environment, inference and evals.
+
+### Definition of Value
+
+01 Knowledge centric AI-SDLC method and practice
+- **AI driven SDLC**, where AI assistant with oversight: 
+	- keeps code concepts in mind, design decisions, traces actionable plans and roadmaps 
+	- enables code - design queries for interactive decisioning
+		- one query and the architecture is up to date
+	- continuum between code and design documentation: methodology to see what changed, keep traceability	
+	- empowering developers to see aspects to be implemented / changed / redesigned and how they fit in roadmaps and workstreams
+
+02 Multi-platform & language architecture/design & code
+
+03 Multi-platform multi-user development & integrattion environment (Linux, MacOS, iOS) build using Flox / Nix.
+   - Foundational components to manage cross environments libraries complexity
+
+04 Shopping AI assistant & mobile app
+   - Multi-turn conversations, multiple conversations, with streaming responses
+
+05 Vertical AI llm evals & data synthesis
+	- DeepEval, Oumi, special design for maintainability of business rules, metrics, requirements, prompts 
+	- Present value of how vertical AI llm evals are done in this project
+
+## Modules
+### SLM inference 
+#### Definition of Value
+01 Implement model inference on device
+
+02 Ability to replace inference engine without impacting FE app
+
+03 Compatible inference engine across device and server, to enable better development productivity
+	- FE and BE teams can develop in parallel, by calling a mock or server-side server via completions API, separating front-end development from back-end.
+	- During development, iOS FE will use same BE, so will not rebuild iOS app each time the model changes
+
+#### Definition of Done
+- Inference implemeted on device from Swift, running via completions API over inference engine on server side
+	- The app has the basics for future implementation paths, roadmaps for both MacOS, iOS  
+	- The goal was to have the smallest design abstraction to test the model functionaly, from the Swift device application.
+
+- Selected Google LiteRT-LM inference engine, as it is compatible with iOS and Linux
+	- Done extensive research, found multiple **inference engines**, shared with team and did presentations. 
+
+- Single adaptor abstracting interaction between FE and BE inference engines
+
+- Inference engine can be either on device or server
+
+- BE **inference engine** can be swapped without impacting the FE app
+	- Integration with inference engine is via OpenAi completion APIs, over HTTP. This approach makes swapping to another inference engine seamless. 
+	- Can also be as embedded in-app libraries engine.  
+	- Approach compatible with vLLM on server side.
+	--- No parallel inference engine execution threads to GPU ---
+	
+**Why LiteRT-LM inference engine on Linux, when vLLM can be used for this on server?**
+**Answer**: It was the simplest solution found at that time, with minimal overhead, as it needed to have Google LiteRT-LM on iOS device. 
+Also, abstractions were built so the iOS - device application team can work in parallel, and have increased productivity by calling a mock or server-side server via completions API, separating front-end development from back-end.
+- During dev - iOS should use same BE, so will not rebuild each time
+
+
+
+### Swift device module
+	- Value proposition - Features: 
+			Has context manager, sliding window
+			Has response streaming
+			Multi-turn conversations (HybridAIBackend.swift inference runtime calls Python server via local URL "/v1/chat/completions" compatible API)
+			Multiple UI modules
+			Work decoupled from BE: FE team can advance seprately
+			Compatible with vLLM on server side -> assessment with proofs
+				Option 1: direct vLLM as backend
+			Conversations managed on the client device side, so the inference engine can be swapped w/o impact to FE
+	- Swiftly like Linux  compiler for Swift
+		SwiftUI is standard for MacOS, GTK recommended for implementation
+			swift-cross-ui: A cross-platform declarative UI framework inspired by SwiftUI. It aims to let you write your UI once in Swift and deploy it across Linux (via GTK4/GTK3), macOS (AppKit), and Windows (WinUI).
+			GTK4/Adwaita (via Adwaita for Swift or C/C++/Python/Rust): The native graphical toolkit and human interface guidelines (HIG) for GNOME and modern Linux desktops. Using it directly or through a dedicated wrapper locks your design language tightly into the native GNOME ecosystem
+	- BE LiteRT LM same abstractions - for Linux, embedded in the app			
+		Code tree: HybridAIMobileChat -> ChatAppModel -> ??? -> HybridAIBackend
+			HybridAIAppleLiteRT: future when Mac or ioS available
+	
+#### Review of Swift tests for chat interface functionality
+	How is the backend inference runtime server mocked, with session etc. - HybridAIBackendIntegrationTests.swift?
+	Check if documentation is available for the functionality, if not, then generate
+	Coverage of tests - come up with full comprehensive tests for OpenAI like chat assistant, make a roadmap
+	Is there anywhere made the case of work decoupled for FE - BE teams (mocks, adaptors)?
+
+
+
+### LLM evals legacy
+- Ordered DAG nodes - gates for judge to score: enforced order of nodes, and hard gates (1 node fails, the others are not executed)
+			Issues: linear tree with 1 child, no DAG; hard-coded turns; LLM judge called per node, per run; **System prompt and criteria are not co-validated**
+		SD native test: more resilient judge adapting to assistant turns, but less granular failures diagnostics - single score for all failures (hard to troubleshoot)
+- Environment inference engine:
+		Flox ~ manages Nix - multi-platform, multi-user, multi-module `todo study in Evernote`
+		Vulkan is inference engine BE where the model actually runs `todo study`
+
+### Next steps
+- common dev intg environment, Linux-based: specs for environment, intg with GPU machine etc.
+	setup the common env, make it work internally if approved 
+		team codes and experiments there, code queries there
+- reproduce Oumi's baseline in this env
+- advance documentation for these capabilities: data synthesis, LLM baselining and evaluations...
+- leverage code in the new common environment, release code updates in sprints, at every 2 weeks
+		device Swift module - work with Dee
+		evals - work with YS, DR
+
+
 <img width="662" height="680" alt="image" src="https://github.com/user-attachments/assets/490af353-3203-4845-823e-fe13a9e01d60" />
-
-
 <img width="725" height="740" alt="image" src="https://github.com/user-attachments/assets/a1764c9c-b2dc-400f-a251-c1965f6478e9" />
 
 -----------------------------
