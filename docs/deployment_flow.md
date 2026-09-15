@@ -1,3 +1,15 @@
+## Roadmap Recipes
+`01`  recipes for data  synthesis per vertical/domain and cross domains using compositional learning (https://medium.com/@mattia.cd.ferrini/compositional-deep-learning-a40a07351c37)
+
+This would be ncessary if looking to fine tune across domains: shopping, banking and budget management.
+
+`02`  recipes for LLM evals for vertical/domain specific : prompt engineering, multi-step business rules, process flows, etc. 
+
+`03`  application micro-architecture recipes for : hybrid orchestration, application modularity, efficient multi-team development, etc
+
+`04`  recipes for model inference engine deployment : multi-gpu distributed inference, detailed multi-layer telemetry, efficient GPU binding for cost control, etc 
+
+--------------------------------------
 ## Purpose
 Define a curricculum for the code walkthrough for the overall joint environment, inference and evals.
 
