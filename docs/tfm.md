@@ -1092,6 +1092,83 @@ The project is considered successful when it produces a working prototype that c
 
 That is the real end-state value of the roadmap, and it is the strongest translation from the NVIDIA-style transaction foundation model concepts into a credible finance product.
 
+### High level business process flow
+
+```mermaid
+flowchart LR
+    classDef user fill:#dff7e8,stroke:#2f7d4a,stroke-width:1.5px,color:#123b22;
+    classDef data fill:#eaf3ff,stroke:#3b6fb6,stroke-width:1.5px,color:#162d4d;
+    classDef insight fill:#fff2d9,stroke:#c98a1f,stroke-width:1.5px,color:#5a3e00;
+    classDef decide fill:#fbe7ff,stroke:#8a4ab5,stroke-width:1.5px,color:#3e1c52;
+    classDef trust fill:#ffe7e7,stroke:#c75a5a,stroke-width:1.5px,color:#4c1d1d;
+    classDef outcome fill:#e8f7f5,stroke:#2b7d76,stroke-width:1.5px,color:#103d3a;
+
+    subgraph U[User / Household]
+        U1[1. User provides financial context\nand goals]
+        U2[2. Household reviews\nspending and obligations]
+        U3[3. Confirms or corrects\nproject interpretation]
+    end
+
+    subgraph D[Data & Signal Layer]
+        D1[4. Transactions, balances,\naccount activity, merchant metadata]
+        D2[5. Household context, goals,\nconstraints, and budget states]
+        D3[6. Enriched events with\nmerchant semantics and cash-flow signals]
+    end
+
+    subgraph I[Insight Layer]
+        I1[7. Sequence patterns and\nbehavior embeddings identified]
+        I2[8. Similar historical patterns\nretrieved and compared]
+        I3[9. Likely project, intent,\nand risk inferred]
+    end
+
+    subgraph C[Decision Layer]
+        C1[10. Scenario comparison\nfor tradeoffs and priorities]
+        C2[11. Explainable recommendation\nwith evidence and uncertainty]
+        C3[12. Decision brief prepared\nfor household review]
+    end
+
+    subgraph T[Trust & Governance]
+        T1[13. Policy and guardrails\ncheck recommendations]
+        T2[14. User sees evidence and\ncan override or correct]
+        T3[15. System updates memory\nand recalibrates confidence]
+    end
+
+    subgraph O[Business Outcome]
+        O1[16. Budget clarity]
+        O2[17. Debt strategy clarity]
+        O3[18. Household planning support]
+        O4[19. Actionable confidence]
+    end
+
+    U1 --> D1
+    U2 --> D2
+    D1 --> D3
+    D2 --> D3
+    D3 --> I1
+    I1 --> I2
+    I2 --> I3
+    I3 --> C1
+    C1 --> C2
+    C2 --> C3
+    C3 --> T1
+    T1 --> T2
+    T2 --> T3
+    T3 --> O1
+    T3 --> O2
+    T3 --> O3
+    T3 --> O4
+    T2 --> U3
+    U3 --> D2
+
+    class U1,U2,U3 user;
+    class D1,D2,D3 data;
+    class I1,I2,I3 insight;
+    class C1,C2,C3 decide;
+    class T1,T2,T3 trust;
+    class O1,O2,O3,O4 outcome;
+```
+
+
 ### High level data flow
 
 ``` mermaid
@@ -1124,7 +1201,66 @@ flowchart LR
     B --> B3[Household planning support]
     B --> B4[Actionable confidence]
 ```
+### Example user screen: household project and debt planning view
 
+```mermaid
+flowchart TB
+    classDef header fill:#dfeafc,stroke:#3d5a80,stroke-width:1.5px,color:#16314d;
+    classDef card fill:#eef7ea,stroke:#2f7d4a,stroke-width:1.5px,color:#123b22;
+    classDef alert fill:#fff2d9,stroke:#c98a1f,stroke-width:1.5px,color:#5a3e00;
+    classDef action fill:#f3e8ff,stroke:#7a49b8,stroke-width:1.5px,color:#3b2159;
+    classDef risk fill:#ffe7e7,stroke:#c75a5a,stroke-width:1.5px,color:#4c1d1d;
+    classDef cold fill:#edf6f7,stroke:#2b7d76,stroke-width:1.5px,color:#103d3a;
+
+    H[Household plan overview\nSmith household · Oct 2026]
+
+    subgraph A[Top summary]
+        A1[Likely project: Home maintenance / storm repair]
+        A2[Confidence: 87%]
+        A3[User override: Confirmed as repair work, not general spend]
+    end
+
+    subgraph B[What we inferred]
+        B1[Repeated hardware + paint + trim purchases]
+        B2[Cash-flow pressure: moderate]
+        B3[Debt utilization: rising over 4 weeks]
+    end
+
+    subgraph C[Evidence]
+        C1[Merchant pattern: hardware + home improvement cluster]
+        C2[Timing pattern: 2 recurring purchase cycles]
+        C3[Budget signal: essential spend remains stable]
+        C4[Risk signal: discretionary spend is elevated]
+    end
+
+    subgraph D[Recommended plan]
+        D1[Stage repairs into 2 monthly windows]
+        D2[Pause nonessential discretionary spend by 18%]
+        D3[Redirect $450 toward debt buffer]
+        D4[Review plan in 14 days]
+    end
+
+    subgraph E[Actions]
+        E1[Review scope]
+        E2[Set monthly cap]
+        E3[Confirm correction]
+        E4[See scenario comparison]
+    end
+
+    H --> A1
+    A1 --> B1
+    B1 --> C1
+    C1 --> D1
+    D1 --> E1
+
+    class H header;
+    class A1,A2,A3,B1,B2,B3,C1,C2,C3,C4,D1,D2,D3,D4,E1,E2,E3,E4 card;
+    class B2,B3,C4 risk;
+    class A3 action;
+    class D1,D2,D3,D4 cold;
+```
+
+-----
 ## NVIDIA blueprint alignment: what the repo actually does and what it does not
 
 The blueprint is a strong reference implementation for a transaction foundation model, but it is not a full product-memory or customer-context architecture. It is a base sequence representation layer for transaction events.
