@@ -1169,95 +1169,83 @@ flowchart LR
 ```
 
 
-### High level data flow
-
-``` mermaid
-flowchart LR
-    U[User / Household] --> P[Financial Life Signals]
-    P --> D[Transaction + Account + Goal Data]
-    D --> E[Data Enrichment Layer]
-    E --> E1[Merchant & product semantics]
-    E --> E2[Household / project context]
-    E --> E3[Cash-flow and constraint signals]
-
-    E --> M[Sequence Intelligence Layer]
-    M --> M1[Behavior embeddings]
-    M --> M2[Pattern similarity]
-    M --> M3[Goal / project inference]
-
-    M --> R[Decision Support Layer]
-    R --> R1[Explainable recommendations]
-    R --> R2[Scenario comparison]
-    R --> R3[Risk / variance insights]
-
-    R --> G[User Review + Trust Layer]
-    G --> G1[Evidence shown to user]
-    G --> G2[Override / correction]
-    G --> G3[Governance + policy checks]
-
-    G --> B[Product Outcome]
-    B --> B1[Budget clarity]
-    B --> B2[Debt strategy clarity]
-    B --> B3[Household planning support]
-    B --> B4[Actionable confidence]
-```
-### Example user screen: household project and debt planning view
+### High level technical architecture: TFM + time-series hybrid flow
 
 ```mermaid
-flowchart TB
-    classDef header fill:#dfeafc,stroke:#3d5a80,stroke-width:1.5px,color:#16314d;
-    classDef card fill:#eef7ea,stroke:#2f7d4a,stroke-width:1.5px,color:#123b22;
-    classDef alert fill:#fff2d9,stroke:#c98a1f,stroke-width:1.5px,color:#5a3e00;
-    classDef action fill:#f3e8ff,stroke:#7a49b8,stroke-width:1.5px,color:#3b2159;
-    classDef risk fill:#ffe7e7,stroke:#c75a5a,stroke-width:1.5px,color:#4c1d1d;
-    classDef cold fill:#edf6f7,stroke:#2b7d76,stroke-width:1.5px,color:#103d3a;
+flowchart LR
+    A[Raw financial inputs\ntransactions, balances, metadata, context]
 
-    H[Household plan overview\nSmith household · Oct 2026]
-
-    subgraph A[Top summary]
-        A1[Likely project: Home maintenance / storm repair]
-        A2[Confidence: 87%]
-        A3[User override: Confirmed as repair work, not general spend]
+    subgraph G1[1. Normalize + enrich]
+        A1[Transactions\nmerchant, account, amount, timestamp]
+        A2[Household / project context\ngoals, constraints, budget]
+        A3[External context\nseasonality, recurring obligations]
+        A4[Merchant / product semantics]
+        A5[Account and household features]
+        A6[Cash-flow and constraint signals]
     end
 
-    subgraph B[What we inferred]
-        B1[Repeated hardware + paint + trim purchases]
-        B2[Cash-flow pressure: moderate]
-        B3[Debt utilization: rising over 4 weeks]
+    subgraph G2[2. TFM path: semantic sequence learning]
+        B1[Canonical transaction events]
+        B2[Windowed sequence records]
+        B3[Domain-specific tokenization]
+        B4[TFM / causal LM]
+        B5[Sequence embeddings]
     end
 
-    subgraph C[Evidence]
-        C1[Merchant pattern: hardware + home improvement cluster]
-        C2[Timing pattern: 2 recurring purchase cycles]
-        C3[Budget signal: essential spend remains stable]
-        C4[Risk signal: discretionary spend is elevated]
+    subgraph G3[3. Time-series path: temporal dynamics]
+        C1[Daily / weekly cash-flow series]
+        C2[Rolling balances and variance]
+        C3[Recurring obligations / seasonality]
+        C4[Forecast + stress indicators]
     end
 
-    subgraph D[Recommended plan]
-        D1[Stage repairs into 2 monthly windows]
-        D2[Pause nonessential discretionary spend by 18%]
-        D3[Redirect $450 toward debt buffer]
-        D4[Review plan in 14 days]
+    subgraph G4[4. Hybrid fusion]
+        D1[Fusion layer\nconcatenate or gated merge]
+        D2[Downstream adapters\nintent / anomaly / recommendation]
     end
 
-    subgraph E[Actions]
-        E1[Review scope]
-        E2[Set monthly cap]
-        E3[Confirm correction]
-        E4[See scenario comparison]
+    subgraph G5[5. Decision layer]
+        E1[Constraint + policy check]
+        E2[Evidence retrieval + explanation]
+        E3[Scenario comparison]
+        E4[User review / override loop]
+        E5[Final decision brief]
     end
 
-    H --> A1
+    A --> A1
+    A --> A2
+    A --> A3
+    A1 --> A4
+    A2 --> A5
+    A2 --> A6
+    A3 --> A6
+    A4 --> B3
+    A5 --> D1
+    A6 --> C1
+    A6 --> D1
+
     A1 --> B1
-    B1 --> C1
-    C1 --> D1
-    D1 --> E1
+    B1 --> B2
+    B2 --> B3
+    B3 --> B4
+    B4 --> B5
 
-    class H header;
-    class A1,A2,A3,B1,B2,B3,C1,C2,C3,C4,D1,D2,D3,D4,E1,E2,E3,E4 card;
-    class B2,B3,C4 risk;
-    class A3 action;
-    class D1,D2,D3,D4 cold;
+    C1 --> C2
+    C2 --> C3
+    C3 --> C4
+
+    B5 --> D1
+    C4 --> D1
+    D1 --> D2
+
+    D2 --> E1
+    E1 --> E2
+    E2 --> E3
+    E3 --> E4
+    E4 --> E5
+
+    classDef step fill:#e8f1ff,stroke:#4a6fa5,stroke-width:1px;
+    class A,A1,A2,A3,A4,A5,A6,B1,B2,B3,B4,B5,C1,C2,C3,C4,D1,D2,E1,E2,E3,E4,E5 step;
 ```
 
 -----
