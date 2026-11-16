@@ -1425,6 +1425,256 @@ These demos should be presented as a coherent product narrative:
 - the system observes financial behavior over time
 - it reconstructs intent, goals, and constraints from sequence data
 - it explains the likely decision context behind spending and debt pressure
-- it compares scenarios and supports user understanding without taking autonomous actions
+- - it compares scenarios and supports user understanding without taking autonomous actions
 
 This is the right executive story because it shows clear business utility, explainability, and a credible technical path—without crossing into higher-risk autonomous decision-making.
+
+## Screen UX for forecasting timeline view capability
+Future cash-flow impact forecasting
+  - This is the missing execution layer in the product model: the ability to project how a selected decision will change the user’s future cash-flow path over time.
+  - This is distinct from both retrospective variance analysis and strategy simulation. It answers the question: “What happens to my income, balances, debt, buffer, and goals month by month if I choose this path?”
+  - The output is a time-based forecast, not a static recommendation. It allows users to inspect the likely effect of a decision on liquidity, debt reduction, savings pace, and goal attainment over a horizon.
+  - Example: a user choosing to aggressively pay off a credit card can see how cash flow, checking balance, emergency fund progress, and debt balances evolve over the next 12–36 months under base, stress, and optimistic scenarios.
+  - This is the capability that makes the product useful as a real decision-support system rather than a reporting tool.
++--------------------------------------------------------------------------------+
+|  SS >  Plans  >  Pay down Card A                      [Household H-22]|
++--------------------------------------------------------------------------------+
+|  FORECAST: Extra $270/month on Card A (19.99% APR)                              |
+|  Horizon:  ( 12 months )  [ 24 months ]  [ 36 months ]       Confidence: Medium |
++--------------------------------------------------------------------------------+
+|                                                                                 |
+|  +------------------------+ +------------------------+ +----------------------+ |
+|  | Card A paid off        | | Lowest cash buffer     | | Emergency fund goal  | |
+|  | Month 12  (base)       | | $1,540  (stress)       | | $5,000 by Month 31   | |
+|  | Month 13  (stress)     | | Floor is $1,500        | | was Month 27         | |
+|  | Month 11  (optimistic) | | [!] Close to floor     | | 4 months later       | |
+|  +------------------------+ +------------------------+ +----------------------+ |
+|                                                                                 |
+|  Cash buffer over time          Scenario: [x] Base  [x] Stress  [x] Optimistic  |
+|                                                                                 |
+|   $2,400 |                                      ______ optimistic               |
+|   $2,000 |  ___________________________________/                                |
+|   $1,900 |=======================================  base                          |
+|   $1,700 |        \                                                             |
+|   $1,540 |          \______________ stress                                      |
+|   $1,500 |- - - - - - - - - - - - - - - - - - - -  buffer floor                |
+|          +----+----+----+----+----+----+----+----+----+----+----+----          |
+|            1    2    3    4    5    6    7    8    9   10   11   12  month      |
+|                                                                                 |
+|  Key events                                                                     |
+|   [!] Stress case: buffer reaches the floor in month 7 only if every month      |
+|       comes in at the low end of your free cash (about $210).     [ See why ]   |
+|   [i] Card A balance: $4,200 now -> $0 in month 12 (base).        [ Details ]   |
+|   [i] Interest saved vs minimum payments only: shown in details.                |
+|                                                                                 |
+|  Assumptions (editable)                                                         |
+|   Extra payment    $270 / month                                  [ Edit ]       |
+|   Free cash        $210 low / $380 typical / $520 high   (from your history)    |
+|   Buffer floor     $1,500  (set by you)                          [ Edit ]       |
+|   Income           stable, no change assumed                     [ Edit ]       |
+|                                                                                 |
+|  Evidence:  12 months of payments and income  |  Model v0.1  |  [ View data ]   |
+|                                                                                 |
++--------------------------------------------------------------------------------+
+|  [ Adjust the plan ]     [ Compare other options ]     [ Accept this plan ]      |
+|  Estimates only, based on your data and the assumptions above. Not financial     |
+|  advice. You stay in control and can change or pause this plan at any time.      |
++--------------------------------------------------------------------------------+
+
+### Process flow simplified
+The user has already chosen a decision, and the system projects how it changes the household's cash-flow path month by month over a 12 to 36 month horizon under base, stress and optimistic scenarios.
+
+```mermaid
+flowchart LR
+    classDef user fill:#dff7e8,stroke:#2f7d4a,stroke-width:1.5px,color:#123b22;
+    classDef state fill:#f1f5f9,stroke:#475569,stroke-width:1.5px,color:#0f172a;
+    classDef engine fill:#fbe7ff,stroke:#8a4ab5,stroke-width:1.5px,color:#3e1c52;
+    classDef guard fill:#ffe7e7,stroke:#c75a5a,stroke-width:1.5px,color:#4c1d1d;
+    classDef monitor fill:#e8f7f5,stroke:#2b7d76,stroke-width:1.5px,color:#103d3a;
+
+    subgraph LU["User lane"]
+        U1["1. User picks a chosen decision and horizon<br/>for example extra card payment, 12 to 36 months"]
+        U2["10. User reviews timeline and scenario bands"]
+        U3["11. User adjusts assumptions or decision,<br/>or accepts the plan"]
+    end
+
+    subgraph LI["Baseline inputs lane, parallel"]
+        I1["2a. Current state<br/>balances, debts, income, obligations"]
+        I2["2b. Goals, constraints, buffer floor"]
+        I3["2c. Baseline cash-flow path<br/>seasonality, income timing, uncertainty"]
+    end
+
+    subgraph LF["Forecast engine lane"]
+        F1["3. Apply decision to baseline<br/>payments, transfers, spend changes"]
+        F2["4a. Base scenario"]
+        F3["4b. Stress scenario<br/>income drop, rate shock"]
+        F4["4c. Optimistic scenario"]
+        F5["5. Month-by-month projection<br/>cash, debt balance, buffer,<br/>goal progress, interest"]
+        F6["6. Detect key events<br/>buffer breach, debt-free date,<br/>goal date, shortfall months"]
+    end
+
+    subgraph LG["Governance lane"]
+        G1["7. Guardrail and confidence check<br/>buffer floor, caps, wide uncertainty"]
+        G2["8. Attach assumptions and evidence ids"]
+        G3["9. Forecast record, audit logged"]
+    end
+
+    subgraph LM["Monitoring lane"]
+        M1["12. Track actual vs forecast"]
+        M2["13. Variance or trigger detected"]
+    end
+
+    U1 --> I1
+    U1 --> I2
+    U1 --> I3
+    I1 --> F1
+    I2 --> F1
+    I3 --> F1
+    F1 --> F2
+    F1 --> F3
+    F1 --> F4
+    F2 --> F5
+    F3 --> F5
+    F4 --> F5
+    F5 --> F6 --> G1 --> G2 --> G3 --> U2 --> U3
+    U3 -.->|"adjust"| F1
+    U3 --> M1 --> M2
+    M2 -.->|"re-forecast"| F1
+
+    class U1,U2,U3 user;
+    class I1,I2,I3 state;
+    class F1,F2,F3,F4,F5,F6 engine;
+    class G1,G2,G3 guard;
+    class M1,M2 monitor;
+```
+
+Legend description:
+- Green: all user actions (decision and horizon, review, adjust or accept).
+- Grey: baseline inputs (current state, goals and constraints, baseline cash-flow path).
+- Purple: forecast engine (apply decision, scenario runs, projection, key events).
+- Red: guardrails, confidence, evidence, and audit.
+- Teal: monitoring of actual vs forecast and re-forecast triggers.
+
+Scope and rules:
+- Input is one already chosen decision. Generating and comparing alternatives belongs to `#SS_C007_alternative_strategy_simulation`; explaining past deviations belongs to `#SS_C004_budget_and_variance_analysis`.
+- Output is a month-by-month path of cash, debt balance, buffer and goal progress, with scenario bands.
+- The baseline path (step 2c) comes from the time-series layer (income timing, seasonality, uncertainty). The projection math (steps 3-6) is deterministic.
+- A hard-constraint breach, such as the buffer floor, is shown to the user as a flagged month and is not hidden.
+- Wide uncertainty lowers the displayed confidence and is shown to the user; the forecast is not suppressed.
+- Variance detected by `#SS_C004` re-triggers the forecast (step 13).
+  
+### Architecture simplified
+```mermaid
+flowchart LR
+  subgraph L1["1. Inputs and contracts"]
+    A1["Transactions and income events"]
+    A2["Selected decision object<br/>from user or SS_C007"]
+    A3["Goals, constraints,<br/>buffer policy"]
+  end
+
+  subgraph L2["2. Feature layer"]
+    B1["Recurring obligation detection<br/>rules"]
+    B2["Series builder<br/>income, obligations, variable spend<br/>pay-period grain"]
+  end
+
+  subgraph L3["3. MODEL INFERENCE LAYER"]
+    M1["M1 Baseline forecaster<br/>classical + quantile<br/>ROLE: required<br/>p10 / p50 / p90 per series"]
+    M2["M2 Challenger forecaster<br/>Kumo Forecast or TimeGPT<br/>ROLE: shadow mode<br/>promoted only if it beats M1"]
+    M3["M3 TFM encoder<br/>ROLE: optional covariates<br/>project phase, regime state"]
+    M4["M4 Cold-start prior<br/>peer or analog retrieval<br/>ROLE: optional, short history"]
+    MS["Champion selector<br/>backtest-gated"]
+  end
+
+  subgraph L4["4. Deterministic projection engine"]
+    P1["Apply decision delta"]
+    P2["Apply named scenarios<br/>base, stress, optimistic"]
+    P3["Project at pay-period grain<br/>roll up to monthly view"]
+    P4["Key events<br/>debt-free month, breach month"]
+  end
+
+  subgraph L5["5. Governance"]
+    G1["Guardrail check<br/>buffer and constraints"]
+    G2["Horizon and confidence labels<br/>bands widen with horizon"]
+  end
+
+  subgraph L6["6. Outputs"]
+    O1["Versioned forecast record<br/>ForecastUpdated event"]
+    O2["User view<br/>scenarios, band, key events"]
+  end
+
+  subgraph L7["7. Evaluation and refresh"]
+    E1["Rolling backtest<br/>WAPE, pinball loss, coverage"]
+    E2["Drift and staleness trigger"]
+  end
+
+  A1 --> B1
+  A1 --> B2
+  B1 --> B2
+  B2 --> M1
+  B2 -.-> M2
+  B2 -.-> M3
+  M3 -.->|"covariates"| M1
+  M4 -.->|"prior when history is short"| M1
+  M1 --> MS
+  M2 -.-> MS
+  MS -->|"baseline path + band"| P1
+  A2 --> P1
+  A3 --> G1
+  P1 --> P2
+  P2 --> P3
+  P3 --> P4
+  P4 --> G1
+  G1 --> G2
+  G2 --> O1
+  O1 --> O2
+  E1 -->|"gates promotion"| MS
+  O1 --> E1
+  E2 -->|"re-forecast"| B2
+  A1 --> E2
+
+  classDef input fill:#f1f5f9,stroke:#475569,color:#0f172a;
+  classDef ts fill:#e8f7f5,stroke:#0f766e,color:#0f172a;
+  classDef tfm fill:#eaf3ff,stroke:#1d4ed8,color:#0f172a;
+  classDef peer fill:#fff2d9,stroke:#b45309,color:#0f172a;
+  classDef engine fill:#fbe7ff,stroke:#7e22ce,color:#0f172a;
+  classDef gate fill:#ffe7e7,stroke:#b91c1c,color:#0f172a;
+  classDef eval fill:#fef9c3,stroke:#a16207,color:#0f172a;
+  classDef user fill:#dff7e8,stroke:#15803d,color:#0f172a;
+
+  class A1,A2,A3,B1,B2,O1 input;
+  class M1,M2 ts;
+  class M3 tfm;
+  class M4 peer;
+  class MS,P1,P2,P3,P4 engine;
+  class G1,G2 gate;
+  class E1,E2 eval;
+  class O2 user;
+```
+
+Legend description:
+- Grey: inputs, contracts, feature layer, and the stored forecast record.
+- Teal: time-series forecasters (M1, M2).
+- Blue: TFM encoder (M3).
+- Amber: cold-start peer prior (M4).
+- Purple: champion selector and the deterministic projection engine.
+- Red: guardrails and confidence labels.
+- Yellow: evaluation and refresh triggers.
+- Green: user-facing view.
+- Dashed edges: optional paths. The default path is transactions, series builder, M1, selector, projection engine.
+
+#### Model roles
+
+| Model | Status | Role | Adoption gate |
+|---|---|---|---|
+| M1 Baseline forecaster (seasonal-naive, ETS, gradient boosting with quantile output) | Required | Predicts the p10, p50 and p90 path for income, obligations and variable spend. | Always on |
+| M2 Challenger forecaster (Kumo Forecast or TimeGPT-style) | Optional, shadow mode | Runs on the same series as M1 for comparison. It is not user-facing until promoted. | Beats M1 on pinball loss and interval coverage by a pre-agreed margin in the rolling backtest |
+| M3 TFM encoder | Optional | Supplies project-phase and regime covariates to M1. It is an encoder, not a forecaster. | Shows lift over M1 without covariates in the F0 to F3 ladder |
+| M4 Cold-start prior (Kumo Forecast retrieval or TFM peer embeddings) | Optional | Supplies a seasonal prior from similar users when history is short. | Peer sharing is opt-in and comparability-gated |
+| Champion selector | Required | Chooses which forecaster's baseline path and band feeds the projection engine. | Promotion requires an E1 backtest win |
+
+Notes:
+- Recurring-obligation detection (layer 2) is rule-based, with TFM embeddings as an optional later improvement. It targets the most forecastable component of the cash-flow path.
+- The decision delta, named scenarios, projection and key events involve no model. Named scenarios (stress, optimistic) are applied in layer 4 and are kept separate from the statistical bands produced by layer 3.
+- Kumo Forecast interval support is unverified, so M2 cannot be adopted until it is checked against the interval-coverage gate.
+- The runbook attributes Kumo to NVIDIA, which is unverified. Vendor, hosting and licensing are to be verified, and hosted use affects the consent and privacy gate.
+- The promotion margin for M2 is not yet defined.
