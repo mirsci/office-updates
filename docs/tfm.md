@@ -1436,6 +1436,8 @@ Future cash-flow impact forecasting
   - The output is a time-based forecast, not a static recommendation. It allows users to inspect the likely effect of a decision on liquidity, debt reduction, savings pace, and goal attainment over a horizon.
   - Example: a user choosing to aggressively pay off a credit card can see how cash flow, checking balance, emergency fund progress, and debt balances evolve over the next 12–36 months under base, stress, and optimistic scenarios.
   - This is the capability that makes the product useful as a real decision-support system rather than a reporting tool.
+
+```text
 +--------------------------------------------------------------------------------+
 |  SS >  Plans  >  Pay down Card A                      [Household H-22]|
 +--------------------------------------------------------------------------------+
@@ -1480,6 +1482,7 @@ Future cash-flow impact forecasting
 |  Estimates only, based on your data and the assumptions above. Not financial     |
 |  advice. You stay in control and can change or pause this plan at any time.      |
 +--------------------------------------------------------------------------------+
+```
 
 ### Process flow simplified
 The user has already chosen a decision, and the system projects how it changes the household's cash-flow path month by month over a 12 to 36 month horizon under base, stress and optimistic scenarios.
