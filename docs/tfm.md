@@ -1683,8 +1683,503 @@ Notes:
 - The promotion margin for M2 is not yet defined.
 
 
-## Proposal: timeline-based future cash-flow impact model
+## Recommended minimum data model
 
+At a minimum, the product should capture:
+
+- User
+- Household
+- Account
+- Transaction
+- Income
+- Debt obligation
+- Goal
+- Budget
+- Scenario
+- Strategy
+- Recommendation
+- Policy
+- Outcome/feedback
+
+And each should have:
+- current state
+- historical state
+- assumptions
+- constraints
+- uncertainty
+- explanation trail
+
+---
+
+## Consolidated minimum data model for a household financial decision assistant
+
+This is the cleaned-up version of the ideas from the earlier sections. The goal is to keep the model realistic without duplicating concepts or turning every concept into a separate “entity” that the product never actually uses.
+
+---
+
+## 1) Critical design principles
+
+### A. Separate domain objects from decision objects
+The model should distinguish:
+- domain entities: User, Household, Goal, Account, Debt, Investment, Budget
+- decision objects: Strategy, Scenario, Recommendation, Constraint, Outcome
+- temporal events: Transaction, Income, BudgetEvent, StrategyChange
+
+If these are merged, the system becomes hard to reason about and hard to evaluate.
+
+### B. Treat portfolio as a derived view, not a separate primary entity
+The “trader” analogy is useful, but do not create a separate “Portfolio” object that duplicates accounts and holdings.
+
+Instead:
+- Account holds cash and balance
+- DebtObligation holds liabilities
+- InvestmentHolding holds investment positions
+- HouseholdPortfolio is a computed summary layer, not a primary persisted entity
+
+This avoids redundancy.
+
+### C. Distinguish strategy from goal
+- Goal = What the household wants to achieve
+- Strategy = How the household intends to achieve it
+
+A goal like “Emergency Fund” is not the same as a strategy like “Debt snowball” or “50/50 debt + investment split.”
+
+### D. Separate constraints from budgeting
+- Budget = planned allocation
+- Constraint = hard rule or policy limit
+- Example: “minimum cash buffer” is a constraint, not a budget line
+
+This matters because a household can have a valid budget and still violate a risk constraint.
+
+---
+
+## 2) Consolidated entity model
+
+### 1. User
+Purpose: personal identity and decision profile
+
+Core fields:
+- user_id
+- age
+- employment_status
+- income_stability
+- location
+- risk_tolerance
+- behavioral_preferences
+- time_horizon_preferences
+- financial_knowledge_level
+
+Important:
+- This is not the same as Household; the user may be part of a shared decision context.
+
+---
+
+### 2. Household
+Purpose: shared economic unit
+
+Core fields:
+- household_id
+- members
+- shared_accounts
+- shared_budget_owner
+- household_risk_profile
+- household_cash_buffer_target
+- debt_service_ratio_limit
+- household_goals
+
+Important:
+- This is the core link between individual decisions and shared financial behavior.
+
+---
+
+### 3. Goal
+Purpose: target outcome to be financed or protected
+
+Core fields:
+- goal_id
+- name
+- type
+- target_amount
+- target_date
+- priority
+- urgency
+- flexibility
+- funding_source
+- status
+- linked_budget_id
+
+Examples:
+- emergency_fund
+- home_purchase
+- debt_reduction
+- retirement
+- family_trip
+- education
+
+Important:
+- Goal must not be confused with Strategy or Recommendation.
+
+---
+
+### 4. Budget
+Purpose: planned allocation of money over time
+
+Core fields:
+- budget_id
+- household_id
+- period
+- category
+- planned_amount
+- actual_amount
+- variance
+- owner
+- linked_goal_id
+
+Examples:
+- monthly_transport_budget
+- groceries_budget
+- savings_budget
+- discretionary_spend_budget
+
+Important:
+- Budget is not a constraint; it is a planning object.
+
+---
+
+### 5. Account
+Purpose: financial container
+
+Core fields:
+- account_id
+- user_id or household_id
+- account_type
+- owner
+- institution
+- current_balance
+- available_balance
+- liquidity
+- currency
+
+Examples:
+- checking
+- savings
+- credit_card
+- mortgage
+- brokerage
+- retirement_account
+
+Important:
+- This is the base layer for balances.
+- It should not duplicate DebtObligation or InvestmentHolding.
+
+---
+
+### 6. Income
+Purpose: cash inflows
+
+Core fields:
+- income_id
+- user_id
+- source
+- amount
+- recurring
+- frequency
+- variability
+- start_date
+- end_date
+
+Examples:
+- salary
+- bonus
+- freelance
+- rental income
+
+Important:
+- This is needed for cash-flow analysis and strategy feasibility.
+
+---
+
+### 7. DebtObligation
+Purpose: liability structure
+
+Core fields:
+- debt_id
+- account_id
+- debtor_user_id
+- debt_type
+- principal
+- remaining_balance
+- apr
+- minimum_payment
+- due_date
+- term_remaining
+- refinancing_options
+- prepayment_penalty
+
+Examples:
+- credit_card
+- car_loan
+- mortgage
+- student_loan
+
+Important:
+- Do not recreate debt as a “strategy”; it is a financial obligation.
+
+---
+
+### 8. InvestmentHolding
+Purpose: actual invested positions or holdings
+
+Core fields:
+- holding_id
+- account_id
+- asset_class
+- instrument
+- quantity
+- market_value
+- expected_return
+- volatility
+- tax_profile
+- time_horizon
+
+Examples:
+- TFSA_equity_etf
+- RRSP_bond_fund
+- taxable_cash
+
+Important:
+- This is where portfolio-like analysis should live, without creating a separate duplicated “portfolio” object.
+
+---
+
+### 9. CashFlow
+Purpose: time-based net cash movement
+
+Core fields:
+- cashflow_id
+- household_id
+- period
+- inflow_total
+- outflow_total
+- net_cashflow
+- essential_expense_total
+- discretionary_spend
+- debt_service
+- savings_rate
+- liquidity_buffer
+
+Important:
+- This is the operational layer that determines whether a strategy is feasible in reality.
+
+---
+
+### 10. Constraint
+Purpose: hard limits and policy rules
+
+Core fields:
+- constraint_id
+- household_id
+- type
+- value
+- comparator
+- rationale
+- active
+- source
+
+Examples:
+- minimum_emergency_fund = 5000
+- maximum_monthly_debt_service_ratio = 0.35
+- cannot_invest_if_liquidity_buffer_below = 2000
+- no_new_debt_without_confirmed_cash_flow
+
+Important:
+- This is different from a budget line and from a strategy recommendation.
+
+---
+
+### 11. Strategy
+Purpose: practical action plan to address a goal or financial situation
+
+Core fields:
+- strategy_id
+- strategy_type
+- goal_id
+- household_id
+- name
+- description
+- allocation_logic
+- starting_balance
+- target_allocation
+- monthly_contribution
+- required_upfront_cost
+- expected_savings_or_return
+- risk_level
+- assumptions
+- status
+
+Examples:
+- debt_first
+- mixed_50_50
+- invest_heavy
+- carpooling
+- bulk_food_buying
+- freezer_purchase
+
+Important:
+- Strategy is not the same as Scenario or Recommendation.
+
+---
+
+### 12. StrategyScenario
+Purpose: evaluation condition for the strategy
+
+Core fields:
+- scenario_id
+- strategy_id
+- scenario_name
+- inputs
+- assumptions
+- expected_outcomes
+- sensitivity_factors
+- risk_factors
+- decision_score
+- recommended_action
+
+Examples:
+- high_fuel_price_carpool
+- irregular_schedule_carpool
+- bulk_buying_with_storage_limit
+- freezer_under_high_electricity_cost
+
+Important:
+- This is how the evaluation engine tests strategy viability under different conditions.
+
+---
+
+### 13. Recommendation
+Purpose: final decision output
+
+Core fields:
+- recommendation_id
+- household_id
+- strategy_id
+- scenario_id
+- status
+- rank
+- rationale
+- confidence
+- alternative_options
+- user_acceptance
+
+Examples:
+- adopt
+- conditional
+- defer
+- reject
+
+Important:
+- Recommendation should be a decision artifact, not the same as Strategy.
+
+---
+
+### 14. Event
+Purpose: historical timeline of financial behavior
+
+Core fields:
+- event_id
+- household_id
+- user_id
+- event_type
+- timestamp
+- category
+- amount
+- linked_account_id
+- linked_goal_id
+- semantic_label
+
+Examples:
+- TRANSACTION
+- INCOME
+- GOAL_CREATED
+- RECOMMENDATION_GENERATED
+- STRATEGY_ACTIVATED
+- BUDGET_OVERRIDE
+
+Important:
+- This is the raw stream that the TFM learns from.
+
+---
+
+## 3) Minimal unified JSON schema
+
+    {
+      "user": {},
+      "household": {},
+      "goals": [],
+      "budgets": [],
+      "accounts": [],
+      "income": [],
+      "debts": [],
+      "investments": [],
+      "cashflows": [],
+      "constraints": [],
+      "strategies": [],
+      "scenarios": [],
+      "recommendations": [],
+      "events": []
+    }
+
+This is the recommended minimum without over-modeling.
+
+---
+
+## 4) What was intentionally removed or not duplicated
+
+### Removed / merged
+- “Client profile” → folded into User + Household
+- “Goals, budgets” → separate Goal and Budget
+- “Strategies” → separate Strategy + Scenario + Recommendation
+- “Trader-style strategy management” → handled as derived planning logic, not a new entity
+- “Portfolio” → treated as a derived summary of accounts + debts + investments
+
+### Why this matters
+These are common duplication traps:
+- Goal and Strategy are not the same
+- Budget and Constraint are not the same
+- Account and Debt/Investment are not the same
+- Recommendation and Strategy are not the same
+- Household and User are not the same
+
+Without this separation, the evaluation engine will have noisy, overlapping inputs and inconsistent scoring.
+
+---
+
+## 5) Final recommendation
+
+The best version is a layered model:
+
+1. Core financial state
+   - User, Household, Account, Income, Debt, Investment, CashFlow
+
+2. Planning layer
+   - Goal, Budget, Constraint
+
+3. Strategy layer
+   - Strategy, Scenario, Recommendation
+
+4. Event layer
+   - Transaction, Behavior Event, Strategy Change Event
+
+This model is:
+- minimal
+- operational
+- evaluable
+- aligned with the trader analogy
+- resistant to duplication
+
+That is the clearest and most defensible proposal for a household financial assistant.
+
+## Proposal: timeline-based future cash-flow impact model
 This should be modeled as a forecast engine, not just a “calendar of decisions.”
 
 The user wants to see:
