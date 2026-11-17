@@ -1681,3 +1681,357 @@ Notes:
 - Kumo Forecast interval support is unverified, so M2 cannot be adopted until it is checked against the interval-coverage gate.
 - The runbook attributes Kumo to NVIDIA, which is unverified. Vendor, hosting and licensing are to be verified, and hosted use affects the consent and privacy gate.
 - The promotion margin for M2 is not yet defined.
+
+
+## Proposal: timeline-based future cash-flow impact model
+
+This should be modeled as a forecast engine, not just a “calendar of decisions.”
+
+The user wants to see:
+- what happens to cash flow month by month
+- how debt, savings, or purchases change future liquidity
+- what is the impact on goals, debt balance, savings balance, and risk
+- what changes under different assumptions
+
+So the core object is a DecisionImpactForecast.
+
+---
+
+## 1) Core data model
+
+### A. DecisionImpactForecast
+This is the main artifact the UI renders.
+
+```json
+{
+  "forecast_id": "F-101",
+  "user_id": "U-1042",
+  "household_id": "H-22",
+  "decision_id": "D-78",
+  "decision_type": "save | pay_debt | invest | purchase | mixed",
+  "selected_strategy_id": "STRAT-001",
+  "horizon_months": 36,
+  "currency": "CAD",
+  "baseline_profile": {},
+  "decision_plan": [],
+  "assumptions": [],
+  "scenarios": [],
+  "output_timeline": [],
+  "summary_metrics": {}
+}
+```
+
+### B. HouseholdCashflowBaseline
+This is the starting point before the decision is applied.
+
+```json
+{
+  "household_id": "H-22",
+  "income": {
+    "salary_monthly": 7600,
+    "bonus_monthly": 0,
+    "other_income_monthly": 300
+  },
+  "essential_expenses_monthly": 3100,
+  "discretionary_expenses_monthly": 850,
+  "debt_payments_monthly": 950,
+  "savings_contribution_monthly": 600,
+  "cash_buffer_target": 6000,
+  "current_cash_buffer": 4200
+}
+```
+
+### C. DecisionPlan
+This captures the actual action selected.
+
+```json
+{
+  "decision_id": "D-78",
+  "decision_name": "Pay credit card aggressively",
+  "decision_type": "pay_debt",
+  "action_schedule": [
+    {
+      "month": 1,
+      "amount": 800,
+      "category": "credit_card_payment",
+      "account_id": "A-CC-1"
+    },
+    {
+      "month": 2,
+      "amount": 800,
+      "category": "credit_card_payment",
+      "account_id": "A-CC-1"
+    }
+  ],
+  "tradeoff": {
+    "reduced_savings_rate": 350,
+    "reduced_discretionary_spend": 150
+  }
+}
+```
+
+### D. FinancialObjectState
+This models balances and liabilities over time.
+
+```json
+{
+  "object_type": "debt | account | investment | goal | expense",
+  "object_id": "OBJ-123",
+  "start_value": 6000,
+  "rate": 0.19,
+  "monthly_payment": 250,
+  "amortization_months": 18
+}
+```
+
+### E. ForecastScenario
+Each decision should model multiple scenarios.
+
+```json
+{
+  "scenario_id": "BASE",
+  "name": "base_case",
+  "assumption_set": {
+    "income_growth": 0.02,
+    "inflation": 0.03,
+    "returns": 0.06
+  },
+  "probability": 0.6
+}
+```
+
+### F. ForecastMonthRow
+This is the timeline object rendered in the UI.
+
+```json
+{
+  "month": 12,
+  "cash_flow_before_decision": 1200,
+  "cash_flow_after_decision": 950,
+  "checking_balance": 5400,
+  "savings_balance": 9800,
+  "credit_card_balance": 2100,
+  "emergency_fund_progress": 0.72,
+  "goal_progress": {
+    "home_maintenance": 0.58
+  },
+  "risk_flags": [
+    "cash_buffer_below_target"
+  ]
+}
+```
+
+### G. AssumptionSet
+Important for explainability.
+
+```json
+{
+  "assumption_id": "A-1",
+  "name": "salary growth",
+  "value": 0.02,
+  "source": "user_input",
+  "confidence": "medium",
+  "impact": "income"
+}
+```
+
+### H. GoalImpact
+Shows how the decision affects goals.
+
+```json
+{
+  "goal_id": "G-02",
+  "goal_name": "Emergency Fund",
+  "goal_target": 15000,
+  "projected_value_month_18": 14200,
+  "status_change": "on_track_to_on_time"
+}
+```
+
+---
+
+## 2) Process flow
+
+### Step 1: Build baseline
+Take the household’s current state:
+- income
+- fixed costs
+- debt balances
+- savings
+- goals
+- risk limits
+
+This creates a “do nothing” baseline forecast.
+
+### Step 2: Capture decision intent
+The user chooses a decision:
+- save more
+- pay debt
+- buy a large item
+- invest a portion
+- mixed strategy
+
+This is converted into a decision plan with:
+- amount
+- timing
+- source account
+- expected impact categories
+
+### Step 3: Convert decision into financial rules
+Rules transform the decision into monthly impacts:
+- recurring payment changes
+- debt principal reduction
+- interest savings
+- savings contribution changes
+- cash buffer impact
+- discretionary spending adjustments
+
+### Step 4: Apply assumptions
+The engine applies scenario assumptions:
+- salary growth
+- inflation
+- rate changes
+- investment returns
+- debt APR changes
+- major one-off expenses
+- emergency events
+
+### Step 5: Simulate month-by-month
+For each month:
+1. start with balances
+2. add income
+3. subtract essentials and scheduled costs
+4. apply strategy payment or investment transfer
+5. apply interest, debt reduction, or returns
+6. update goals and liquidity metrics
+7. flag risks
+
+### Step 6: Score risk and feasibility
+The engine evaluates:
+- minimum cash buffer
+- debt service ratio
+- cash-flow negativity
+- goal completion probability
+- risk of falling short of emergency buffer
+
+### Step 7: Produce timeline + summary
+The UI shows:
+- monthly cash-flow table
+- chart of balances over time
+- “impact on goals” view
+- “at-risk months” view
+- comparison to baseline
+
+---
+
+## 3) Example simulation output
+
+```json
+{
+  "forecast_id": "F-101",
+  "decision_name": "Debt-first strategy",
+  "time_horizon_months": 24,
+  "summary": {
+    "net_cashflow_after_decision": 2400,
+    "debt_reduction_total": 9600,
+    "savings_balance_end": 11750,
+    "cash_buffer_end": 5100,
+    "goal_completion": {
+      "emergency_fund": 0.82,
+      "home_maintenance": 0.66
+    }
+  },
+  "timeline": [
+    {
+      "month": 1,
+      "checking_balance": 4300,
+      "credit_card_balance": 5800,
+      "savings_balance": 9500,
+      "monthly_net_cashflow": 1200,
+      "risk_flags": []
+    },
+    {
+      "month": 6,
+      "checking_balance": 3900,
+      "credit_card_balance": 3400,
+      "savings_balance": 10100,
+      "monthly_net_cashflow": 900,
+      "risk_flags": ["lower_discretionary_margin"]
+    },
+    {
+      "month": 12,
+      "checking_balance": 4600,
+      "credit_card_balance": 1200,
+      "savings_balance": 11200,
+      "monthly_net_cashflow": 1500,
+      "risk_flags": []
+    }
+  ]
+}
+```
+
+---
+
+## 4) Critical review of the proposal
+
+### Strengths
+- It turns a decision into a forecast, not a static statement
+- It can compare “before vs after” clearly
+- It supports risk detection and decision explainability
+- It aligns with goal-based planning and household cash flow
+
+### Weaknesses
+- It relies heavily on assumptions
+- User input quality matters a lot
+- Interest and return forecasts can be overly confident
+- One-off shocks are not modeled unless explicitly added
+- It may overstate precision, which is dangerous in personal finance
+
+### Most important design requirement
+The system should always show:
+- the baseline
+- the scenario assumptions
+- the uncertainty band
+- the “at-risk months”
+- the key tradeoffs
+
+A timeline without uncertainty is too confident.
+
+### Necessary guardrails
+- show best / base / stress scenarios
+- highlight assumption sensitivity
+- warn if the decision leaves the user below emergency cash buffer
+- flag if debt strategy increases short-term stress
+- allow user overrides of assumptions
+
+---
+
+## 5) Best practice for this product
+
+The product should render a forecast with three layers:
+
+1. Baseline path
+   - existing trajectory with no change
+
+2. Selected decision path
+   - recommended action applied
+
+3. Stress path
+   - scenario with income drop, rate increase, or expense spike
+
+This makes the forecast useful and trustworthy.
+
+---
+
+## Final recommendation
+
+The cleanest model is:
+
+- Baseline cash-flow state
+- Decision plan
+- Scenario assumptions
+- Simulated month-by-month balance changes
+- Goal impact tracking
+- Risk flags and explanation layer
+
+This is the right foundation for a user-facing “what will happen to my cash flow?” timeline.
